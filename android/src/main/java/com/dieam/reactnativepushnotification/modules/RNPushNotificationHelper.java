@@ -382,25 +382,7 @@ public class RNPushNotificationHelper {
                 return;
             }
 
-            long newFireDate = 0;
-
-            switch (repeatType) {
-                case "time":
-                    newFireDate = fireDate + repeatTime;
-                    break;
-                case "week":
-                    newFireDate = fireDate + 7 * ONE_DAY;
-                    break;
-                case "day":
-                    newFireDate = fireDate + ONE_DAY;
-                    break;
-                case "hour":
-                    newFireDate = fireDate + ONE_HOUR;
-                    break;
-                case "minute":
-                    newFireDate = fireDate + ONE_MINUTE;
-                    break;
-            }
+            long newFireDate = getNextFireDate(fireDate, repeatType, repeatTime);
 
             // Sanity check, should never happen
             if (newFireDate != 0) {
@@ -410,6 +392,39 @@ public class RNPushNotificationHelper {
                 this.sendNotificationScheduled(bundle);
             }
         }
+    }
+
+	private long getNextFireDate(long previousFireDate, String repeatType, long repeatTime) {
+        final long now = System.currentTimeMillis();
+        long interval = 1;
+        switch (repeatType) {
+            case "time":
+                if (repeatTime < 1) {
+                    throw new IllegalArgumentException("repeatTime < 1");
+                }
+                interval = repeatTime;
+                break;
+            case "week":
+                interval = 7 * ONE_DAY;
+                break;
+            case "day":
+                interval = ONE_DAY;
+                break;
+            case "hour":
+                interval = ONE_HOUR;
+                break;
+            case "minute":
+                interval = ONE_MINUTE;
+                break;
+            default:
+                throw new IllegalArgumentException("repeatType not one of time, week, day, hour, minute");
+        }
+        long nextFireDate = previousFireDate;
+        do {
+            nextFireDate += interval;
+        }
+        while (nextFireDate < now);
+        return nextFireDate;
     }
 
     public void clearNotifications() {
